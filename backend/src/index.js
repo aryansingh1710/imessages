@@ -4,15 +4,17 @@ dotenv.config();
 import express from "express";
 import cors from "cors";
 import fs from "fs";
-import path from "path";
+import path from "path";  
 
 import { clerkMiddleware } from "@clerk/express";
 
 import { connectDB } from "./lib/db.js";
 import clerkWebhook from "./webhooks/clerk.webhook.js";
+import authRoutes from "./routes/auth.route.js" 
 // import job from "./lib/cron.js"; // Agar cron job hai to import karo
 
 const app = express();
+
 
 const PORT = process.env.PORT || 3000;
 const FRONTEND_URL = process.env.FRONTEND_URL;
@@ -40,6 +42,8 @@ app.use(express.json());
 app.get("/health", (req, res) => {
   res.status(200).json({ ok: true });
 });
+
+app.use("/api/auth",authRoutes)
 
 if (fs.existsSync(publicDir)) {
   app.use(express.static(publicDir));
