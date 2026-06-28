@@ -1,47 +1,61 @@
 import dotenv from "dotenv";
-dotenv.config();  
+dotenv.config();
+
 import express from "express";
-import cors from "cors"
+import cors from "cors";
+import fs from "fs";
+import path from "path";
 
-import fs from "fs"
-import path from "path"
+import { clerkMiddleware } from "@clerk/express";
 
-
-import {clerkMiddleware} from "@clerk/express"
 import { connectDB } from "./lib/db.js";
-import User from "./models/user.model.js";
+import clerkWebhook from "./webhooks/clerk.webhook.js";
+// import job from "./lib/cron.js"; // Agar cron job hai to import karo
 
 const app = express();
 
 const PORT = process.env.PORT || 3000;
-const FRONTEND_URL=process.env.FRONTEND_URL;
+const FRONTEND_URL = process.env.FRONTEND_URL;
 
-const publicDir=path.join(process.cwd(),"public")
+const publicDir = path.join(process.cwd(), "public");
 
-app.use("/api/webhooks/clerk",express.raw({type:"application/json"}),clerkWebhook)
+// Clerk webhook (must be before express.json())
+app.use(
+  "/api/webhooks/clerk",
+  express.raw({ type: "application/json" }),
+  clerkWebhook
+);
 
-app.use(clerkMiddleware())
+app.use(clerkMiddleware());
 
-app.use(cors({origin:FRONTEND_URL,credentials:true}))
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    credentials: true,
+  })
+);
 
-app.use(express.json())
+app.use(express.json());
 
-app.get("/health",(req,res)=>{
-    res.status(200).json({ok:true})
-})
+app.get("/health", (req, res) => {
+  res.status(200).json({ ok: true });
+});
 
-if(fs.existsSync(publicDir)){
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
 
-    app.use(express.static(publicDir))
-
-    app.get("/{*any}",(res,req,next)=>{
-        res.sendFile(path.join(publicDir, "index.html"), (err) => next(err));
-    })
+  app.get("/{*any}", (req, res, next) => {
+    res.sendFile(path.join(publicDir, "index.html"), (err) => {
+      if (err) next(err);
+    });
+  });
 }
 
 app.listen(PORT, async () => {
-    await connectDB();  
-    console.log(`Server is up and running on PORT: ${PORT}`);
-    if (process.env.NODE_ENV === "production") job.start();
+  await connectDB();
+  console.log(`Server is running on port ${PORT}`);
+
+  // if (process.env.NODE_ENV === "production") {
+  //   job.start();
+  // }
 });
- 
