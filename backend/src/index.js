@@ -11,7 +11,8 @@ import { clerkMiddleware } from "@clerk/express";
 import { connectDB } from "./lib/db.js";
 import clerkWebhook from "./webhooks/clerk.webhook.js";
 import authRoutes from "./routes/auth.route.js" 
-// import job from "./lib/cron.js"; // Agar cron job hai to import karo
+import messageRoutes from "./routes/messages.route.js"
+import job from "./lib/cron.js"; // Agar cron job hai to import karo
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/auth",authRoutes)
+app.use("/api/messages",messageRoutes)
 
 if (fs.existsSync(publicDir)) {
   app.use(express.static(publicDir));
